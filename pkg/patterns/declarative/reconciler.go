@@ -27,6 +27,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -295,6 +296,29 @@ func (r *Reconciler) BuildDeploymentObjectsWithFs(ctx context.Context, name type
 		log.Error(err, "error loading raw manifest")
 		return nil, err
 	}
+
+	//TODO make generic somehow
+	// 1B. get starlark string from configMap
+	configmapName := types.NamespacedName{Name: "gabito-streaming", Namespace: "default"}
+	// Fetch the object
+	configmapInstance := &v1.ConfigMap{}
+	if err := r.client.Get(ctx, configmapName, configmapInstance); err != nil {
+		// Error reading the object - requeue the request.
+		log.Error(err, "error reading object")
+		return nil, err
+	}
+	starlarkString := configmapInstance.Data["super-pkg-fn"]
+	
+	// 1C. raw expansions
+	// expand
+	for _, expansion := range r.options.rawManifestExpansions {
+		expanded, err := expansion(ctx, instance, manifestFiles, starlarkString)
+		if err != nil {
+			return nil, err
+		}
+		manifestFiles = expanded
+	}
+	
 	manifestObjects := &manifest.Objects{}
 	// 2. Perform raw string operations
 	for manifestPath, manifestStr := range manifestFiles {

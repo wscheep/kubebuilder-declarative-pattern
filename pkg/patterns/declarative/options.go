@@ -39,6 +39,7 @@ var Options struct {
 
 type reconcilerParams struct {
 	rawManifestOperations []ManifestOperation
+	rawManifestExpansions []ManifestExpansion
 	objectTransformations []ObjectTransform
 	manifestController    ManifestController
 
@@ -67,6 +68,9 @@ type Sink interface {
 // ManifestOperation is an operation that transforms raw string manifests before applying it
 type ManifestOperation = func(context.Context, DeclarativeObject, string) (string, error)
 
+// ManifestExpansion is an operation that expands raw string manifests before applying it
+type ManifestExpansion = func(context.Context, DeclarativeObject, map[string]string, string) (map[string]string, error)
+
 // ObjectTransform is an operation that transforms the manifest objects before applying it
 type ObjectTransform = func(context.Context, DeclarativeObject, *manifest.Objects) error
 
@@ -80,6 +84,14 @@ type LabelMaker = func(context.Context, DeclarativeObject) map[string]string
 func WithRawManifestOperation(operations ...ManifestOperation) reconcilerOption {
 	return func(p reconcilerParams) reconcilerParams {
 		p.rawManifestOperations = append(p.rawManifestOperations, operations...)
+		return p
+	}
+}
+
+// WithRawManifestOperation adds the specific ManifestOperations to the chain of manifest changes
+func WithRawManifestExpansion(operations ...ManifestExpansion) reconcilerOption {
+	return func(p reconcilerParams) reconcilerParams {
+		p.rawManifestExpansions = append(p.rawManifestExpansions, operations...)
 		return p
 	}
 }
