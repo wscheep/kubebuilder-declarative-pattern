@@ -369,6 +369,9 @@ func (r *Reconciler) BuildDeploymentObjectsWithFs(ctx context.Context, name type
 	// If Kustomize option is on, it's assumed that the entire addon manifest is created using Kustomize
 	// Here, the manifest is built using Kustomize and then replaces the Object items with the created manifest
 	if r.IsKustomizeOptionUsed() {
+		// set path to root
+		manifestObjects.Path = "."
+
 		// run kustomize to create final manifest
 		opts := krusty.MakeDefaultOptions()
 		k := krusty.MakeKustomizer(opts)
