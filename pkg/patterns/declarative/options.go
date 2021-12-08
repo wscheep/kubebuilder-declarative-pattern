@@ -69,7 +69,7 @@ type Sink interface {
 type ManifestOperation = func(context.Context, DeclarativeObject, string) (string, error)
 
 // ManifestExpansion is an operation that expands raw string manifests before applying it
-type ManifestExpansion = func(context.Context, DeclarativeObject, map[string]string, string) (map[string]string, error)
+type ManifestExpansion = func(context.Context, DeclarativeObject, map[string]string) (map[string]string, error)
 
 // ObjectTransform is an operation that transforms the manifest objects before applying it
 type ObjectTransform = func(context.Context, DeclarativeObject, *manifest.Objects) error
