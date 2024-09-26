@@ -295,6 +295,17 @@ func (r *Reconciler) BuildDeploymentObjectsWithFs(ctx context.Context, name type
 		log.Error(err, "error loading raw manifest")
 		return nil, err
 	}
+	
+	// 1C. raw expansions
+	// expand
+	for _, expansion := range r.options.rawManifestExpansions {
+		expanded, err := expansion(ctx, instance, manifestFiles)
+		if err != nil {
+			return nil, err
+		}
+		manifestFiles = expanded
+	}
+	
 	manifestObjects := &manifest.Objects{}
 	// 2. Perform raw string operations
 	for manifestPath, manifestStr := range manifestFiles {
@@ -345,6 +356,9 @@ func (r *Reconciler) BuildDeploymentObjectsWithFs(ctx context.Context, name type
 	// If Kustomize option is on, it's assumed that the entire addon manifest is created using Kustomize
 	// Here, the manifest is built using Kustomize and then replaces the Object items with the created manifest
 	if r.IsKustomizeOptionUsed() {
+		// set path to root
+		manifestObjects.Path = "."
+
 		// run kustomize to create final manifest
 		opts := krusty.MakeDefaultOptions()
 		k := krusty.MakeKustomizer(opts)
